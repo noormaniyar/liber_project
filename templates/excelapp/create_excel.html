@@ -1,0 +1,10 @@
+<!-- excelapp/templates/excelapp/create_excel.html -->
+<form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% for form in formset %}
+    {{ form.as_table }}
+    <br>
+    {% endfor %}
+    <input type="submit" value="Generate Excel">
+</form>
