@@ -2,57 +2,16 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from openpyxl import Workbook
-from .forms import ExcelFormSet, TableConfigForm
+from .forms import ExcelFormSet
 from .sum_forms import ExcelSumFormSet
 from openpyxl.utils import get_column_letter
 from io import BytesIO
-from reportlab.lib.pagesizes import letter, landscape, portrait, A4
+from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak
+from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from django.http import JsonResponse
-
-
-
-def generate_pdf(request):
-    if request.method == 'POST':
-        form = TableConfigForm(request.POST)
-        if form.is_valid():
-            num_rows = form.cleaned_data['num_rows']
-            num_cols = form.cleaned_data['num_cols']
-            cell_width = form.cleaned_data['cell_width']
-            cell_height = form.cleaned_data['cell_height']
-
-            # Create a PDF document
-            pdf_buffer = BytesIO()
-            doc = SimpleDocTemplate(pdf_buffer, pagesize=(portrait(A4)))  #landscape(letter)
-
-            # Create an empty table with the specified number of rows and columns
-            data = [['' for _ in range(num_cols)] for _ in range(num_rows)]
-            table = Table(data, colWidths=[cell_width] * num_cols, rowHeights=[cell_height] * num_rows)
-
-            # Set custom style for the table
-            table.setStyle(TableStyle([
-                ('INNERGRID', (0, 0), (-1, -1), 0.5, (0, 0, 0)),  # Add inner grid lines
-                ('BOX', (0, 0), (-1, -1), 0.5, (0, 0, 0))  # Add cell borders
-            ]))
-
-            # Build the PDF
-            elements = [table]
-            doc.build(elements)
-
-            # Serve the PDF as a response
-            pdf_buffer.seek(0)
-            response = HttpResponse(pdf_buffer.read(), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="empty_table.pdf"'
-            return response
-    else:
-        form = TableConfigForm()
-
-    return render(request, 'excelapp/table_config.html', {'form': form})
-
-
-
+# excelapp/views.py
 
 
 def create_pdf(request):
@@ -62,25 +21,24 @@ def create_pdf(request):
         if formset.is_valid():
             # Create a list to hold the data
             data = [['Name', 'Age', 'City']]
-
+            
             for form in formset:
-                data.append([form.cleaned_data['name'], form.cleaned_data['age'], form.cleaned_data['city']])
+                if form.has_changed():  # Check if the form is changed (i.e., not empty)
+                    data.append([form.cleaned_data['name'], form.cleaned_data['age'], form.cleaned_data['city']])
 
             # Create a PDF buffer and a PDF document
             buffer = BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=portrait(A4))
+            doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
 
             # Create a table from the data and set style
             table = Table(data)
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                
-                ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
-                
-                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ]))
 
@@ -94,6 +52,8 @@ def create_pdf(request):
             buffer.seek(0)
             response = HttpResponse(buffer.read(), content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="example.pdf"'
+            buffer.close()
+
             return response
 
     else:
@@ -115,7 +75,7 @@ def create_sum_pdf(request):
 
             # Create a PDF buffer and a PDF document
             buffer = BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=portrait(A4))
+            doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
 
             # Create a table from the data and set style
             table = Table(data)

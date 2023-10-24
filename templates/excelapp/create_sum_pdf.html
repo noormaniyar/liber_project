@@ -1,0 +1,36 @@
+<!-- excelapp/templates/excelapp/create_pdf.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Sum PDF</title>
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {{ formset.management_form }}
+        {% for form in formset %}
+            {{ form.as_table }}
+            <br>
+        {% endfor %}
+        <input type="submit" value="Generate PDF">
+    </form>
+
+
+
+
+
+    {% comment %} <script>
+        const addRowButton = document.getElementById('add-row');
+        addRowButton.addEventListener('click', function() {
+            const formset = document.getElementById('id_form-TOTAL_FORMS');
+            const totalForms = parseInt(formset.value);
+            const newRow = document.getElementById('empty-form').cloneNode(true);
+            newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, totalForms);
+            newRow.style.display = 'table-row';
+            document.querySelector('table tbody').appendChild(newRow);
+            formset.value = totalForms + 1;
+        });
+    </script>     {% endcomment %}
+</body>
+</html>

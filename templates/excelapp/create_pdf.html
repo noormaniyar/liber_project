@@ -1,0 +1,19 @@
+<!-- excelapp/templates/excelapp/create_pdf.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate PDF</title>
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        {{ formset.management_form }}
+        {% for form in formset %}
+        {{ form.as_table }}
+        <br>
+        {% endfor %}
+        <input type="submit" value="Generate PDF">
+    </form>
+</body>
+</html>

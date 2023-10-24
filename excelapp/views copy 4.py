@@ -10,11 +10,69 @@ from reportlab.lib.pagesizes import letter, landscape, portrait, A4
 from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak
 from reportlab.lib import colors
-from django.http import JsonResponse
 
 
+# excelapp/views.py
+from django.shortcuts import render
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.pagesizes import letter, landscape
+from io import BytesIO
+from .forms import TableConfigForm
 
 def generate_pdf(request):
+    if request.method == 'POST':
+        form = TableConfigForm(request.POST)
+        if form.is_valid():
+            num_rows = form.cleaned_data['num_rows']
+            num_cols = form.cleaned_data['num_cols']
+            cell_width = form.cleaned_data['cell_width']
+            cell_height = form.cleaned_data['cell_height']
+
+            # Parse custom column widths and row heights from the form
+            custom_col_widths = [float(w) for w in form.cleaned_data['custom_col_widths'].split(',')]
+            custom_row_heights = [float(h) for h in form.cleaned_data['custom_row_heights'].split(',')]
+
+            # Create a PDF document
+            pdf_buffer = BytesIO()
+            doc = SimpleDocTemplate(pdf_buffer, pagesize=(landscape(letter)))
+
+            # Create an empty table with the specified number of rows and columns
+            data = [['' for _ in range(num_cols)] for _ in range(num_rows)]
+
+            # Apply custom column widths and row heights
+            col_widths = [cell_width] * num_cols
+            row_heights = [cell_height] * num_rows
+
+            for i, width in enumerate(custom_col_widths):
+                col_widths[i] = width
+
+            for i, height in enumerate(custom_row_heights):
+                row_heights[i] = height
+
+            table = Table(data, colWidths=col_widths, rowHeights=row_heights)
+
+            # Set custom style for the table
+            table.setStyle(TableStyle([
+                ('INNERGRID', (0, 0), (-1, -1), 0.5, (0, 0, 0)),  # Add inner grid lines
+                ('BOX', (0, 0), (-1, -1), 0.5, (0, 0, 0))  # Add cell borders
+            ]))
+
+            # Build the PDF
+            elements = [table]
+            doc.build(elements)
+
+            # Serve the PDF as a response
+            pdf_buffer.seek(0)
+            response = HttpResponse(pdf_buffer.read(), content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="custom_table.pdf"'
+            return response
+    else:
+        form = TableConfigForm()
+
+    return render(request, 'excelapp/table_config.html', {'form': form})
+
+
+def old_ok_generate_pdf(request):
     if request.method == 'POST':
         form = TableConfigForm(request.POST)
         if form.is_valid():
