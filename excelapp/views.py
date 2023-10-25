@@ -11,6 +11,59 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, PageBreak
 from reportlab.lib import colors
 from django.http import JsonResponse
+from openpyxl.styles import Font
+# from openpyxl.worksheet.merge import merge_cells
+# from openpyxl import Workbook
+
+
+def generate_excel(request):
+    if request.method == 'POST':
+        form = TableConfigForm(request.POST)
+        if form.is_valid():
+            num_rows = form.cleaned_data['num_rows']
+            num_cols = form.cleaned_data['num_cols']
+            cell_width = form.cleaned_data['cell_width']
+            cell_height = form.cleaned_data['cell_height']
+
+            # Create a new Workbook and select the active sheet
+            wb = Workbook()
+            ws = wb.active
+
+            # Set the font size and bold for the entire sheet
+            bold_font = Font(bold=True)
+            for row in ws.iter_rows():
+                for cell in row:
+                    cell.font = bold_font
+
+            # Create an empty table with the specified number of rows and columns
+            for row in range(1, num_rows + 1):
+                for col in range(1, num_cols + 1):
+                    cell = ws.cell(row=row, column=col)
+                    cell.value = f'Row {row}, Col {col}'
+
+            # Adjust column widths and row heights
+            for col_num in range(1, num_cols + 1):
+                col_letter = get_column_letter(col_num)
+                col_width = cell_width
+                ws.column_dimensions[col_letter].width = col_width
+
+            for row_num in range(1, num_rows + 1):
+                row_height = cell_height
+                ws.row_dimensions[row_num].height = row_height
+
+            # Create a response with the Excel file
+            response = HttpResponse(content_type='application/ms-excel')
+            response['Content-Disposition'] = 'attachment; filename="empty_table.xlsx"'
+
+            # Save the workbook to the response
+            wb.save(response)
+
+            return response
+    else:
+        form = TableConfigForm()
+
+    return render(request, 'excelapp/table_config.html', {'form': form})
+
 
 
 

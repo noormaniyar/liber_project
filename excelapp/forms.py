@@ -9,6 +9,7 @@ class TableConfigForm(forms.ModelForm):
     class Meta:
         model = TableConfig
         fields = ['num_rows', 'num_cols', 'cell_width', 'cell_height']
+        # fields = ['num_rows', 'num_cols', 'cell_width', 'cell_height', 'merge_cells']
         
 
 

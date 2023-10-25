@@ -10,5 +10,6 @@ urlpatterns = [
     path('create-pdf/', views.create_pdf, name='create_pdf'),
     path('create-sum-pdf/', views.create_sum_pdf, name='create_sum_pdf'),
     path('generate-pdf/', views.generate_pdf, name='generate_pdf'),
+    path('generate-excel/', views.generate_excel, name='generate_excel'),
     
 ]
